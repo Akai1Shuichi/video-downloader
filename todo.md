@@ -61,21 +61,21 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 3 — URL và metadata
 
-- [ ] Chỉ chấp nhận URL `http` hoặc `https`.
-- [ ] Chuẩn hóa URL và hostname.
-- [ ] Nhận diện sơ bộ Facebook, Instagram, TikTok, Douyin hoặc `other`.
-- [ ] Tạo model `DownloadRequest`.
-- [ ] Tạo model `VideoMetadata`.
-- [ ] Tạo model `DownloadResult`.
-- [ ] Map dữ liệu thô của `yt-dlp` sang các model nội bộ.
-- [ ] Tạo command `video-downloader info <url>`.
-- [ ] Hiển thị title, platform, uploader, duration và video ID.
-- [ ] Thêm option `--json`.
+- [x] Chỉ chấp nhận URL `http` hoặc `https`.
+- [x] Chuẩn hóa URL và hostname.
+- [x] Nhận diện sơ bộ Facebook, Instagram, TikTok, Douyin hoặc `other`.
+- [x] Tạo model `DownloadRequest`.
+- [x] Tạo model `VideoMetadata`.
+- [x] Tạo model `DownloadResult`.
+- [x] Map dữ liệu thô của `yt-dlp` sang các model nội bộ.
+- [x] Tạo command `video-downloader info <url>`.
+- [x] Hiển thị title, platform, uploader, duration và video ID.
+- [x] Thêm option `--json`.
 
 **Hoàn thành khi:**
 
-- [ ] `info` đọc được metadata mà không tải video.
-- [ ] Có unit test cho URL hợp lệ, URL sai và short link.
+- [x] `info` đọc được metadata mà không tải video.
+- [x] Có unit test cho URL hợp lệ, URL sai và short link.
 
 ---
 

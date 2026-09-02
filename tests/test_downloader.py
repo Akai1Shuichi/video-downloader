@@ -15,6 +15,10 @@ class FakeAdapter:
         self.calls.append((url, output_dir))
         return self.result
 
+    def get_metadata(self, url: str):
+        self.metadata_url = url
+        return {"id": "abc", "title": "Example", "extractor_key": "Instagram"}
+
 
 def test_service_downloads_to_requested_directory(tmp_path: Path) -> None:
     expected = tmp_path / "video.mp4"
@@ -42,3 +46,15 @@ def test_service_creates_output_directory(tmp_path: Path) -> None:
     DownloaderService(adapter=adapter).download("https://example.com/video", output_dir)
 
     assert output_dir.is_dir()
+
+
+def test_service_normalizes_url_and_maps_metadata(tmp_path: Path) -> None:
+    adapter = FakeAdapter(tmp_path / "unused.mp4")
+
+    metadata = DownloaderService(adapter=adapter).get_metadata(
+        " HTTPS://WWW.INSTAGRAM.COM:443/reel/abc#comments "
+    )
+
+    assert adapter.metadata_url == "https://www.instagram.com/reel/abc"
+    assert metadata.id == "abc"
+    assert metadata.platform == "instagram"

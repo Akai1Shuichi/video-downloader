@@ -1,11 +1,14 @@
 """Command-line interface for Video Downloader."""
 
+import json
+from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
 
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from video_downloader import __version__
 from video_downloader.doctor import run_environment_checks
@@ -99,3 +102,45 @@ def download(
         raise typer.Exit(code=1) from exc
 
     typer.secho(f"Downloaded to: {file_path}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def info(
+    url: Annotated[str, typer.Argument(help="Public video URL to inspect.")],
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Print machine-readable JSON."),
+    ] = False,
+) -> None:
+    """Read video metadata without downloading the media."""
+    try:
+        metadata = DownloaderService().get_metadata(url)
+    except VideoDownloaderError as exc:
+        typer.secho(f"Metadata failed: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+
+    if json_output:
+        typer.echo(json.dumps(asdict(metadata), ensure_ascii=False, indent=2))
+        return
+
+    table = Table(title="Video metadata", show_header=False)
+    table.add_column("Field", style="bold")
+    table.add_column("Value")
+    rows = (
+        ("Title", metadata.title),
+        ("Platform", metadata.platform),
+        ("Uploader", metadata.uploader or "unknown"),
+        ("Duration", _format_duration(metadata.duration_seconds)),
+        ("Video ID", metadata.id),
+    )
+    for label, value in rows:
+        table.add_row(label, Text(value))
+    Console().print(table)
+
+
+def _format_duration(duration_seconds: int | None) -> str:
+    if duration_seconds is None:
+        return "unknown"
+    hours, remainder = divmod(duration_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"

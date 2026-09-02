@@ -12,6 +12,23 @@ from video_downloader.errors import DownloadError
 class YtDlpAdapter:
     """Download one video through ``yt_dlp.YoutubeDL``."""
 
+    def get_metadata(self, url: str) -> dict[str, Any]:
+        """Extract metadata without downloading media."""
+        options: dict[str, Any] = {
+            "noplaylist": True,
+            "quiet": True,
+            "skip_download": True,
+        }
+        try:
+            with YoutubeDL(options) as ydl:
+                info = ydl.extract_info(url, download=False)
+        except YtDlpDownloadError as exc:
+            raise DownloadError(self._clean_error_message(exc)) from exc
+
+        if not info:
+            raise DownloadError("yt-dlp did not return information about the video.")
+        return info
+
     def download(self, url: str, output_dir: Path) -> Path:
         options: dict[str, Any] = {
             "format": "best",

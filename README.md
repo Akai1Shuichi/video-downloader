@@ -20,6 +20,7 @@ Kiểm tra cài đặt:
 ```bash
 video-downloader --version
 video-downloader doctor
+video-downloader info "URL"
 video-downloader download "URL"
 ruff check .
 pytest
@@ -35,5 +36,15 @@ video-downloader download "URL"
 video-downloader download "URL" --output ./my-downloads
 ```
 
-Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải. Command `info` sẽ
-được bổ sung trong phase tiếp theo.
+Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
+
+Đọc metadata mà không tải video:
+
+```bash
+video-downloader info "URL"
+video-downloader info "URL" --json
+```
+
+Kết quả gồm video ID, tiêu đề, nền tảng, người đăng, thời lượng, thumbnail và các độ phân
+giải mà nguồn cung cấp. Tool nhận diện sơ bộ Facebook, Instagram, TikTok, Douyin và dùng
+`other` cho các website khác.

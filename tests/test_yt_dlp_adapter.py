@@ -57,3 +57,30 @@ def test_adapter_converts_yt_dlp_error(monkeypatch, tmp_path: Path) -> None:
 
     with pytest.raises(DownloadError, match="video unavailable"):
         YtDlpAdapter().download("https://example.com/video", tmp_path)
+
+
+def test_adapter_reads_metadata_without_downloading(monkeypatch) -> None:
+    captured_options = {}
+
+    class FakeYoutubeDL:
+        def __init__(self, options) -> None:
+            captured_options.update(options)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            return None
+
+        def extract_info(self, url: str, *, download: bool):
+            assert url == "https://example.com/video"
+            assert download is False
+            return {"id": "abc", "title": "Example"}
+
+    monkeypatch.setattr("video_downloader.adapters.yt_dlp_adapter.YoutubeDL", FakeYoutubeDL)
+
+    result = YtDlpAdapter().get_metadata("https://example.com/video")
+
+    assert result["id"] == "abc"
+    assert captured_options["skip_download"] is True
+    assert captured_options["noplaylist"] is True

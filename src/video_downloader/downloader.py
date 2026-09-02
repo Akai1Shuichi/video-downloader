@@ -1,17 +1,21 @@
 """Download orchestration independent from the CLI."""
 
 from pathlib import Path
-from typing import Protocol
-from urllib.parse import urlparse
+from typing import Any, Protocol
 
 from video_downloader.adapters.yt_dlp_adapter import YtDlpAdapter
-from video_downloader.errors import DownloadError, InvalidUrlError
+from video_downloader.errors import DownloadError
+from video_downloader.metadata import map_video_metadata
+from video_downloader.models import DownloadRequest, VideoMetadata
+from video_downloader.url_utils import normalize_url
 
 
 class DownloadAdapter(Protocol):
     """Interface required by the download service."""
 
     def download(self, url: str, output_dir: Path) -> Path: ...
+
+    def get_metadata(self, url: str) -> dict[str, Any]: ...
 
 
 class DownloaderService:
@@ -21,16 +25,21 @@ class DownloaderService:
         self._adapter = adapter or YtDlpAdapter()
 
     def download(self, url: str, output_dir: Path = Path("downloads")) -> Path:
-        parsed_url = urlparse(url)
-        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
-            raise InvalidUrlError("URL must be a complete http:// or https:// address.")
+        request = DownloadRequest(url=normalize_url(url), output_dir=output_dir)
 
         try:
-            output_dir.mkdir(parents=True, exist_ok=True)
+            request.output_dir.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            raise DownloadError(f"Could not create output directory '{output_dir}': {exc}") from exc
+            message = f"Could not create output directory '{request.output_dir}': {exc}"
+            raise DownloadError(message) from exc
 
-        if not output_dir.is_dir():
-            raise DownloadError(f"Output path is not a directory: {output_dir}")
+        if not request.output_dir.is_dir():
+            raise DownloadError(f"Output path is not a directory: {request.output_dir}")
 
-        return self._adapter.download(url, output_dir)
+        return self._adapter.download(request.url, request.output_dir)
+
+    def get_metadata(self, url: str) -> VideoMetadata:
+        """Read and map metadata without downloading media."""
+        normalized_url = normalize_url(url)
+        raw_metadata = self._adapter.get_metadata(normalized_url)
+        return map_video_metadata(raw_metadata, normalized_url)
