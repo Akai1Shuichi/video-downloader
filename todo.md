@@ -100,22 +100,22 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 5 — Chọn chất lượng và FFmpeg
 
-- [ ] Thêm `--quality best`.
-- [ ] Thêm `--quality 1080`.
-- [ ] Thêm `--quality 720`.
-- [ ] Thêm `--quality 480`.
-- [ ] Chọn format tốt nhất không vượt quá độ phân giải yêu cầu.
-- [ ] Thêm fallback nếu nguồn không có đúng độ phân giải.
-- [ ] Ưu tiên MP4/H.264/AAC khi nguồn cung cấp.
-- [ ] Ghép video và audio bằng FFmpeg khi chúng là hai stream riêng.
-- [ ] Dùng ffprobe kiểm tra output có video stream.
-- [ ] Kiểm tra output có audio stream nếu nguồn có audio.
+- [x] Thêm `--quality best`.
+- [x] Thêm `--quality 1080`.
+- [x] Thêm `--quality 720`.
+- [x] Thêm `--quality 480`.
+- [x] Chọn format tốt nhất không vượt quá độ phân giải yêu cầu.
+- [x] Thêm fallback nếu nguồn không có đúng độ phân giải.
+- [x] Ưu tiên MP4/H.264/AAC khi nguồn cung cấp.
+- [x] Ghép video và audio bằng FFmpeg khi chúng là hai stream riêng.
+- [x] Dùng ffprobe kiểm tra output có video stream.
+- [x] Kiểm tra output có audio stream nếu nguồn có audio.
 
 **Hoàn thành khi:**
 
-- [ ] `--quality 720` không tải video cao hơn 720p.
-- [ ] File ghép phát được cả hình và tiếng.
-- [ ] Thiếu FFmpeg có thông báo lỗi riêng.
+- [x] `--quality 720` không tải video cao hơn 720p.
+- [x] File ghép phát được cả hình và tiếng.
+- [x] Thiếu FFmpeg có thông báo lỗi riêng.
 
 ---
 

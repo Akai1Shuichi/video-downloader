@@ -14,6 +14,7 @@ from video_downloader import __version__
 from video_downloader.doctor import run_environment_checks
 from video_downloader.downloader import DownloaderService
 from video_downloader.errors import VideoDownloaderError
+from video_downloader.models import Quality
 
 app = typer.Typer(
     name="video-downloader",
@@ -100,10 +101,18 @@ def download(
             help="Custom base filename; unsafe path characters are removed.",
         ),
     ] = None,
+    quality: Annotated[
+        Quality,
+        typer.Option(
+            "--quality",
+            help="Maximum video quality: best, 1080, 720, or 480.",
+            case_sensitive=False,
+        ),
+    ] = "best",
 ) -> None:
     """Download one public video at the best available combined quality."""
     try:
-        file_path = DownloaderService().download(url, output, filename)
+        file_path = DownloaderService().download(url, output, filename, quality)
     except VideoDownloaderError as exc:
         typer.secho(f"Download failed: {exc}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc

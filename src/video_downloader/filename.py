@@ -33,10 +33,18 @@ def sanitize_filename_component(value: str, max_bytes: int = MAX_STEM_BYTES) -> 
     return truncated or "video"
 
 
-def build_safe_stem(title: str, video_id: str, custom_name: str | None = None) -> str:
+def build_safe_stem(
+    title: str,
+    video_id: str,
+    custom_name: str | None = None,
+    quality_label: str | None = None,
+) -> str:
     """Build a bounded filename stem that always contains the video ID."""
     safe_id = sanitize_filename_component(video_id, max_bytes=48)
-    suffix = f" [{safe_id}]"
+    safe_quality = (
+        sanitize_filename_component(quality_label, max_bytes=16) if quality_label else None
+    )
+    suffix = f" [{safe_quality}] [{safe_id}]" if safe_quality else f" [{safe_id}]"
     title_budget = max(1, MAX_STEM_BYTES - len(suffix.encode("utf-8")))
     safe_title = sanitize_filename_component(custom_name or title, max_bytes=title_budget)
     return f"{safe_title}{suffix}"
@@ -47,4 +55,3 @@ def _truncate_utf8(value: str, max_bytes: int) -> str:
     if len(encoded) <= max_bytes:
         return value
     return encoded[:max_bytes].decode("utf-8", errors="ignore")
-

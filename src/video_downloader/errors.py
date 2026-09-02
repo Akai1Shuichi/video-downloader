@@ -12,3 +12,10 @@ class InvalidUrlError(VideoDownloaderError):
 class DownloadError(VideoDownloaderError):
     """Raised when yt-dlp cannot complete a download."""
 
+
+class FfmpegMissingError(DownloadError):
+    """Raised when FFmpeg tools required for download are unavailable."""
+
+
+class MediaValidationError(DownloadError):
+    """Raised when ffprobe cannot validate the downloaded media."""

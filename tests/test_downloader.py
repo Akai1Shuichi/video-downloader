@@ -9,10 +9,16 @@ from video_downloader.errors import InvalidUrlError
 class FakeAdapter:
     def __init__(self, result: Path) -> None:
         self.result = result
-        self.calls: list[tuple[str, Path, str | None]] = []
+        self.calls: list[tuple[str, Path, str | None, str]] = []
 
-    def download(self, url: str, output_dir: Path, filename: str | None = None) -> Path:
-        self.calls.append((url, output_dir, filename))
+    def download(
+        self,
+        url: str,
+        output_dir: Path,
+        filename: str | None = None,
+        quality: str = "best",
+    ) -> Path:
+        self.calls.append((url, output_dir, filename, quality))
         return self.result
 
     def get_metadata(self, url: str):
@@ -28,7 +34,7 @@ def test_service_downloads_to_requested_directory(tmp_path: Path) -> None:
     result = service.download("https://example.com/video", tmp_path)
 
     assert result == expected
-    assert adapter.calls == [("https://example.com/video", tmp_path, None)]
+    assert adapter.calls == [("https://example.com/video", tmp_path, None, "best")]
 
 
 @pytest.mark.parametrize("url", ["", "example.com/video", "ftp://example.com/video"])
@@ -56,8 +62,18 @@ def test_service_passes_custom_filename_to_adapter(tmp_path: Path) -> None:
     )
 
     assert adapter.calls == [
-        ("https://example.com/video", tmp_path, "Tên tùy chỉnh 🎬")
+        ("https://example.com/video", tmp_path, "Tên tùy chỉnh 🎬", "best")
     ]
+
+
+def test_service_passes_requested_quality_to_adapter(tmp_path: Path) -> None:
+    adapter = FakeAdapter(tmp_path / "video.mp4")
+
+    DownloaderService(adapter=adapter).download(
+        "https://example.com/video", tmp_path, quality="720"
+    )
+
+    assert adapter.calls == [("https://example.com/video", tmp_path, None, "720")]
 
 
 def test_service_normalizes_url_and_maps_metadata(tmp_path: Path) -> None:

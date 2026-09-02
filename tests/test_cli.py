@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from video_downloader import __version__
 from video_downloader.cli import app
-from video_downloader.errors import DownloadError
+from video_downloader.errors import DownloadError, FfmpegMissingError
 from video_downloader.models import VideoMetadata
 
 runner = CliRunner()
@@ -26,10 +26,13 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
     downloaded_file = tmp_path / "video [abc123].mp4"
 
     class FakeService:
-        def download(self, url: str, output: Path, filename: str | None) -> Path:
+        def download(
+            self, url: str, output: Path, filename: str | None, quality: str
+        ) -> Path:
             assert url == "https://example.com/video"
             assert output == tmp_path
             assert filename is None
+            assert quality == "best"
             return downloaded_file
 
     monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
@@ -42,7 +45,9 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
 
 def test_download_command_hides_traceback_for_expected_error(monkeypatch) -> None:
     class FakeService:
-        def download(self, _url: str, _output: Path, _filename: str | None) -> Path:
+        def download(
+            self, _url: str, _output: Path, _filename: str | None, _quality: str
+        ) -> Path:
             raise DownloadError("video unavailable")
 
     monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
@@ -58,9 +63,12 @@ def test_download_command_accepts_custom_filename(monkeypatch, tmp_path: Path) -
     downloaded_file = tmp_path / "Tên tùy chỉnh 🎬 [abc].mp4"
 
     class FakeService:
-        def download(self, _url: str, output: Path, filename: str | None) -> Path:
+        def download(
+            self, _url: str, output: Path, filename: str | None, quality: str
+        ) -> Path:
             assert output == tmp_path
             assert filename == "Tên tùy chỉnh 🎬"
+            assert quality == "best"
             return downloaded_file
 
     monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
@@ -79,6 +87,41 @@ def test_download_command_accepts_custom_filename(monkeypatch, tmp_path: Path) -
 
     assert result.exit_code == 0
     assert str(downloaded_file) in result.stdout
+
+
+def test_download_command_accepts_quality(monkeypatch, tmp_path: Path) -> None:
+    class FakeService:
+        def download(
+            self, _url: str, _output: Path, _filename: str | None, quality: str
+        ) -> Path:
+            assert quality == "720"
+            return tmp_path / "video.mp4"
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video", "--quality", "720"])
+
+    assert result.exit_code == 0
+
+
+def test_download_command_rejects_unknown_quality() -> None:
+    result = runner.invoke(app, ["download", "https://example.com/video", "--quality", "4k"])
+
+    assert result.exit_code == 2
+
+
+def test_download_command_reports_missing_ffmpeg_separately(monkeypatch) -> None:
+    class FakeService:
+        def download(self, *_args) -> Path:
+            raise FfmpegMissingError("Missing ffmpeg. Install FFmpeg and add it to PATH.")
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video"])
+
+    assert result.exit_code == 1
+    assert "Missing ffmpeg" in result.stdout
+    assert "Traceback" not in result.stdout
 
 
 def _metadata() -> VideoMetadata:

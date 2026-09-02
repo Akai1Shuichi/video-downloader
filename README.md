@@ -35,6 +35,7 @@ Tải một video public ở chất lượng kết hợp tốt nhất mà nguồ
 video-downloader download "URL"
 video-downloader download "URL" --output ./my-downloads
 video-downloader download "URL" --filename "Tên tùy chỉnh 🎬"
+video-downloader download "URL" --quality 720
 ```
 
 Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
@@ -44,6 +45,11 @@ emoji. Video ID luôn được thêm vào tên để hai video trùng tiêu đ�
 `--filename` chỉ đặt phần tên cơ sở; path tuyệt đối, `../` và ký tự phân cách thư mục sẽ
 bị vô hiệu hóa. Nếu file hoàn chỉnh đã tồn tại, tool dùng lại file đó và không ghi đè.
 File `.part` được giữ lại để yt-dlp tiếp tục tải ở lần chạy sau.
+
+`--quality` nhận `best`, `1080`, `720` hoặc `480`; mặc định là `best`. Với một mức số,
+tool chọn bản tốt nhất không vượt quá mức đó và tự fallback xuống bản thấp hơn. Khi nguồn
+cung cấp các stream riêng, yt-dlp gọi FFmpeg để ghép video và audio, ưu tiên MP4/H.264/AAC.
+Sau tải, ffprobe bắt buộc xác nhận có video stream và có audio stream nếu nguồn có audio.
 
 Đọc metadata mà không tải video:
 
