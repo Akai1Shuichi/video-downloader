@@ -121,36 +121,36 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 6 — Progress, retry và error handling
 
-- [ ] Tạo progress hook cho `yt-dlp`.
-- [ ] Hiển thị trạng thái đọc metadata.
-- [ ] Hiển thị phần trăm, dung lượng, tốc độ và ETA khi tải.
-- [ ] Hiển thị trạng thái ghép media.
-- [ ] Hiển thị kết quả hoàn thành.
-- [ ] Thêm `--quiet`.
-- [ ] Retry hữu hạn cho timeout và lỗi mạng tạm thời.
-- [ ] Thêm backoff giữa các lần retry.
-- [ ] Không retry URL sai, video private hoặc login required.
-- [ ] Xử lý `Ctrl+C` sạch sẽ.
-- [ ] Không hiển thị traceback trừ khi bật debug.
+- [x] Tạo progress hook cho `yt-dlp`.
+- [x] Hiển thị trạng thái đọc metadata.
+- [x] Hiển thị phần trăm, dung lượng, tốc độ và ETA khi tải.
+- [x] Hiển thị trạng thái ghép media.
+- [x] Hiển thị kết quả hoàn thành.
+- [x] Thêm `--quiet`.
+- [x] Retry hữu hạn cho timeout và lỗi mạng tạm thời.
+- [x] Thêm backoff giữa các lần retry.
+- [x] Không retry URL sai, video private hoặc login required.
+- [x] Xử lý `Ctrl+C` sạch sẽ.
+- [x] Không hiển thị traceback trừ khi bật debug.
 
 ### Error code cần có
 
-- [ ] `INVALID_URL`
-- [ ] `UNSUPPORTED_SITE`
-- [ ] `VIDEO_UNAVAILABLE`
-- [ ] `LOGIN_REQUIRED`
-- [ ] `RATE_LIMITED`
-- [ ] `NETWORK_ERROR`
-- [ ] `FFMPEG_MISSING`
-- [ ] `POSTPROCESS_ERROR`
-- [ ] `WRITE_ERROR`
-- [ ] `UNKNOWN_ERROR`
+- [x] `INVALID_URL`
+- [x] `UNSUPPORTED_SITE`
+- [x] `VIDEO_UNAVAILABLE`
+- [x] `LOGIN_REQUIRED`
+- [x] `RATE_LIMITED`
+- [x] `NETWORK_ERROR`
+- [x] `FFMPEG_MISSING`
+- [x] `POSTPROCESS_ERROR`
+- [x] `WRITE_ERROR`
+- [x] `UNKNOWN_ERROR`
 
 **Hoàn thành khi:**
 
-- [ ] Mỗi nhóm lỗi có thông báo và exit code phù hợp.
-- [ ] Retry không tạo vòng lặp vô hạn.
-- [ ] CLI không treo im lặng khi đang xử lý.
+- [x] Mỗi nhóm lỗi có thông báo và exit code phù hợp.
+- [x] Retry không tạo vòng lặp vô hạn.
+- [x] CLI không treo im lặng khi đang xử lý.
 
 ---
 

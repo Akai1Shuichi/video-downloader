@@ -6,34 +6,63 @@ from typing import Any
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError as YtDlpDownloadError
 
-from video_downloader.errors import DownloadError, MediaValidationError
+from video_downloader.errors import MediaValidationError, WriteError, map_external_error
 from video_downloader.filename import build_safe_stem
 from video_downloader.format_selector import select_format
 from video_downloader.media_probe import MediaProbe, source_has_audio
 from video_downloader.models import Quality
+from video_downloader.progress import (
+    ProgressCallback,
+    ProgressEvent,
+    ProgressStatus,
+    event_from_yt_dlp,
+)
+
+
+class _SilentLogger:
+    def debug(self, _message: str) -> None:
+        pass
+
+    def info(self, _message: str) -> None:
+        pass
+
+    def warning(self, _message: str) -> None:
+        pass
+
+    def error(self, _message: str) -> None:
+        pass
 
 
 class YtDlpAdapter:
     """Download one video through ``yt_dlp.YoutubeDL``."""
 
-    def __init__(self, media_probe: MediaProbe | None = None) -> None:
+    def __init__(
+        self,
+        media_probe: MediaProbe | None = None,
+        progress_callback: ProgressCallback | None = None,
+    ) -> None:
         self._media_probe = media_probe or MediaProbe()
+        self._progress_callback = progress_callback
 
     def get_metadata(self, url: str) -> dict[str, Any]:
         """Extract metadata without downloading media."""
         options: dict[str, Any] = {
+            "extractor_retries": 0,
+            "logger": _SilentLogger(),
+            "no_warnings": True,
             "noplaylist": True,
             "quiet": True,
+            "socket_timeout": 20,
             "skip_download": True,
         }
         try:
             with YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=False)
         except YtDlpDownloadError as exc:
-            raise DownloadError(self._clean_error_message(exc)) from exc
+            raise map_external_error(exc) from exc
 
         if not info:
-            raise DownloadError("yt-dlp did not return information about the video.")
+            raise map_external_error(RuntimeError("yt-dlp returned no video information."))
         return info
 
     def download(
@@ -54,30 +83,44 @@ class YtDlpAdapter:
         )
         options: dict[str, Any] = {
             "continuedl": True,
+            "extractor_retries": 0,
+            "file_access_retries": 0,
             "format": format_selection.selector,
             "format_sort": format_selection.sort,
+            "fragment_retries": 0,
+            "logger": _SilentLogger(),
             "merge_output_format": "mp4",
+            "no_progress": True,
+            "no_warnings": True,
             "noplaylist": True,
             "nopart": False,
             "outtmpl": str(output_dir / f"{safe_stem}.%(ext)s"),
             "overwrites": False,
+            "retries": 0,
+            "socket_timeout": 20,
         }
+        if self._progress_callback:
+            options["progress_hooks"] = [self._on_progress]
+            options["postprocessor_hooks"] = [self._on_postprocessor]
 
         try:
             with YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=True)
                 if not info:
-                    raise DownloadError("yt-dlp did not return information about the video.")
+                    raise map_external_error(
+                        RuntimeError("yt-dlp returned no video information.")
+                    )
                 file_path = self._resolve_file_path(ydl, info, output_dir, safe_stem)
         except YtDlpDownloadError as exc:
-            raise DownloadError(self._clean_error_message(exc)) from exc
+            raise map_external_error(exc) from exc
         except OSError as exc:
-            raise DownloadError(f"Could not write the downloaded file: {exc}") from exc
+            raise WriteError(f"Could not write the downloaded file: {exc}") from exc
 
         file_path = self._ensure_inside_output(file_path, output_dir)
         if not file_path.is_file() or file_path.stat().st_size == 0:
             message = f"Download finished but no valid output file was found: {file_path}"
-            raise DownloadError(message)
+            raise WriteError(message)
+        self._emit(ProgressEvent(ProgressStatus.VERIFYING))
         probe_result = self._media_probe.verify(
             file_path,
             require_audio=source_has_audio(metadata),
@@ -124,14 +167,22 @@ class YtDlpAdapter:
         return Path(filename)
 
     @staticmethod
-    def _clean_error_message(error: Exception) -> str:
-        message = str(error).strip()
-        return message.removeprefix("ERROR: ") or "yt-dlp could not download this URL."
-
-    @staticmethod
     def _ensure_inside_output(file_path: Path, output_dir: Path) -> Path:
         resolved_file = file_path.resolve()
         resolved_output = output_dir.resolve()
         if not resolved_file.is_relative_to(resolved_output):
-            raise DownloadError("yt-dlp returned a file outside the selected output directory.")
+            raise WriteError("yt-dlp returned a file outside the selected output directory.")
         return resolved_file
+
+    def _on_progress(self, data: dict[str, object]) -> None:
+        event = event_from_yt_dlp(data)
+        if event:
+            self._emit(event)
+
+    def _on_postprocessor(self, data: dict[str, object]) -> None:
+        if data.get("status") == "started" and data.get("postprocessor") == "Merger":
+            self._emit(ProgressEvent(ProgressStatus.MERGING))
+
+    def _emit(self, event: ProgressEvent) -> None:
+        if self._progress_callback:
+            self._progress_callback(event)

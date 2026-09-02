@@ -4,8 +4,9 @@ import pytest
 from yt_dlp.utils import DownloadError as YtDlpDownloadError
 
 from video_downloader.adapters.yt_dlp_adapter import YtDlpAdapter
-from video_downloader.errors import DownloadError, FfmpegMissingError
+from video_downloader.errors import DownloadError, FfmpegMissingError, VideoUnavailableError
 from video_downloader.media_probe import MediaProbeResult
+from video_downloader.progress import ProgressStatus
 
 
 class FakeMediaProbe:
@@ -71,6 +72,9 @@ def test_adapter_uses_best_format_and_returns_downloaded_path(
     assert download_options["overwrites"] is False
     assert download_options["continuedl"] is True
     assert download_options["nopart"] is False
+    assert download_options["retries"] == 0
+    assert download_options["fragment_retries"] == 0
+    assert download_options["extractor_retries"] == 0
     assert "[720p] [abc]" in download_options["outtmpl"]
     assert result == downloaded_file.resolve()
     assert media_probe.verified == [(downloaded_file.resolve(), True)]
@@ -92,7 +96,7 @@ def test_adapter_converts_yt_dlp_error(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setattr("video_downloader.adapters.yt_dlp_adapter.YoutubeDL", FailingYoutubeDL)
 
-    with pytest.raises(DownloadError, match="video unavailable"):
+    with pytest.raises(VideoUnavailableError, match="video unavailable"):
         YtDlpAdapter().download("https://example.com/video", tmp_path)
 
 
@@ -168,3 +172,49 @@ def test_adapter_rejects_unknown_height_fallback_above_cap(
         YtDlpAdapter(media_probe=FakeMediaProbe(height=1080)).download(
             "https://example.com/video", tmp_path, quality="720"
         )
+
+
+def test_adapter_emits_download_merge_and_verify_events(monkeypatch, tmp_path: Path) -> None:
+    downloaded_file = tmp_path / "merged.mp4"
+    downloaded_file.write_bytes(b"video")
+
+    class FakeYoutubeDL:
+        def __init__(self, options) -> None:
+            self.options = options
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            return None
+
+        def extract_info(self, _url: str, *, download: bool):
+            if not download:
+                return {"id": "abc", "title": "Example"}
+            self.options["progress_hooks"][0](
+                {
+                    "status": "downloading",
+                    "downloaded_bytes": 50,
+                    "total_bytes": 100,
+                    "speed": 10,
+                    "eta": 5,
+                }
+            )
+            self.options["postprocessor_hooks"][0](
+                {"status": "started", "postprocessor": "Merger"}
+            )
+            return {"filepath": str(downloaded_file)}
+
+    monkeypatch.setattr("video_downloader.adapters.yt_dlp_adapter.YoutubeDL", FakeYoutubeDL)
+    events = []
+
+    YtDlpAdapter(
+        media_probe=FakeMediaProbe(),
+        progress_callback=events.append,
+    ).download("https://example.com/video", tmp_path)
+
+    assert [event.status for event in events] == [
+        ProgressStatus.DOWNLOADING,
+        ProgressStatus.MERGING,
+        ProgressStatus.VERIFYING,
+    ]

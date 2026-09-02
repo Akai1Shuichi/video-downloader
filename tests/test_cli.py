@@ -7,6 +7,7 @@ from video_downloader import __version__
 from video_downloader.cli import app
 from video_downloader.errors import DownloadError, FfmpegMissingError
 from video_downloader.models import VideoMetadata
+from video_downloader.progress import ProgressEvent, ProgressStatus
 
 runner = CliRunner()
 
@@ -26,6 +27,9 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
     downloaded_file = tmp_path / "video [abc123].mp4"
 
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def download(
             self, url: str, output: Path, filename: str | None, quality: str
         ) -> Path:
@@ -45,6 +49,9 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
 
 def test_download_command_hides_traceback_for_expected_error(monkeypatch) -> None:
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def download(
             self, _url: str, _output: Path, _filename: str | None, _quality: str
         ) -> Path:
@@ -55,7 +62,7 @@ def test_download_command_hides_traceback_for_expected_error(monkeypatch) -> Non
     result = runner.invoke(app, ["download", "https://example.com/missing"])
 
     assert result.exit_code == 1
-    assert "Download failed: video unavailable" in result.stdout
+    assert "Download failed [UNKNOWN_ERROR]: video unavailable" in result.stdout
     assert "Traceback" not in result.stdout
 
 
@@ -63,6 +70,9 @@ def test_download_command_accepts_custom_filename(monkeypatch, tmp_path: Path) -
     downloaded_file = tmp_path / "Tên tùy chỉnh 🎬 [abc].mp4"
 
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def download(
             self, _url: str, output: Path, filename: str | None, quality: str
         ) -> Path:
@@ -91,6 +101,9 @@ def test_download_command_accepts_custom_filename(monkeypatch, tmp_path: Path) -
 
 def test_download_command_accepts_quality(monkeypatch, tmp_path: Path) -> None:
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def download(
             self, _url: str, _output: Path, _filename: str | None, quality: str
         ) -> Path:
@@ -112,6 +125,9 @@ def test_download_command_rejects_unknown_quality() -> None:
 
 def test_download_command_reports_missing_ffmpeg_separately(monkeypatch) -> None:
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def download(self, *_args) -> Path:
             raise FfmpegMissingError("Missing ffmpeg. Install FFmpeg and add it to PATH.")
 
@@ -119,7 +135,7 @@ def test_download_command_reports_missing_ffmpeg_separately(monkeypatch) -> None
 
     result = runner.invoke(app, ["download", "https://example.com/video"])
 
-    assert result.exit_code == 1
+    assert result.exit_code == 8
     assert "Missing ffmpeg" in result.stdout
     assert "Traceback" not in result.stdout
 
@@ -139,6 +155,9 @@ def _metadata() -> VideoMetadata:
 
 def test_info_command_displays_metadata(monkeypatch) -> None:
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def get_metadata(self, _url: str) -> VideoMetadata:
             return _metadata()
 
@@ -153,6 +172,9 @@ def test_info_command_displays_metadata(monkeypatch) -> None:
 
 def test_info_command_outputs_json(monkeypatch) -> None:
     class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
         def get_metadata(self, _url: str) -> VideoMetadata:
             return _metadata()
 
@@ -161,6 +183,7 @@ def test_info_command_outputs_json(monkeypatch) -> None:
     result = runner.invoke(app, ["info", "https://example.com/video", "--json"])
 
     assert result.exit_code == 0
+    assert "Status:" not in result.stdout
     assert json.loads(result.stdout) == {
         "id": "abc123",
         "source_url": "https://www.tiktok.com/video/abc123",
@@ -171,3 +194,100 @@ def test_info_command_outputs_json(monkeypatch) -> None:
         "thumbnail_url": "https://example.com/thumb.jpg",
         "available_heights": [480, 720],
     }
+
+
+def test_download_displays_progress_lifecycle(monkeypatch, tmp_path: Path) -> None:
+    class FakeService:
+        def __init__(self, progress_callback=None) -> None:
+            self.callback = progress_callback
+
+        def download(self, *_args) -> Path:
+            self.callback(ProgressEvent(ProgressStatus.READING_METADATA))
+            self.callback(
+                ProgressEvent(
+                    ProgressStatus.DOWNLOADING,
+                    downloaded_bytes=50,
+                    total_bytes=100,
+                    speed=10,
+                    eta=5,
+                )
+            )
+            self.callback(ProgressEvent(ProgressStatus.MERGING))
+            self.callback(ProgressEvent(ProgressStatus.COMPLETED))
+            return tmp_path / "video.mp4"
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video"])
+
+    assert result.exit_code == 0
+    for text in ("Reading metadata", "50.0%", "Merging", "Completed", "Downloaded to"):
+        assert text in result.stdout
+
+
+def test_download_quiet_hides_progress_but_keeps_result(monkeypatch, tmp_path: Path) -> None:
+    class FakeService:
+        def __init__(self, progress_callback=None) -> None:
+            assert progress_callback is None
+
+        def download(self, *_args) -> Path:
+            return tmp_path / "video.mp4"
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video", "--quiet"])
+
+    assert result.exit_code == 0
+    assert "Status:" not in result.stdout
+    assert "Downloading:" not in result.stdout
+    assert "Downloaded to:" in result.stdout
+
+
+def test_download_handles_keyboard_interrupt(monkeypatch) -> None:
+    class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def download(self, *_args) -> Path:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video"])
+
+    assert result.exit_code == 130
+    assert "cancelled by user" in result.stdout
+    assert "Traceback" not in result.stdout
+
+
+def test_unexpected_error_is_hidden_without_debug(monkeypatch) -> None:
+    class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def download(self, *_args) -> Path:
+            raise RuntimeError("internal secret detail")
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video"])
+
+    assert result.exit_code == 1
+    assert "UNKNOWN_ERROR" in result.stdout
+    assert "internal secret detail" not in result.stdout
+
+
+def test_debug_preserves_unexpected_exception(monkeypatch) -> None:
+    class FakeService:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def download(self, *_args) -> Path:
+            raise RuntimeError("debug detail")
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(app, ["download", "https://example.com/video", "--debug"])
+
+    assert isinstance(result.exception, RuntimeError)
+    assert str(result.exception) == "debug detail"

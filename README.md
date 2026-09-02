@@ -36,6 +36,7 @@ video-downloader download "URL"
 video-downloader download "URL" --output ./my-downloads
 video-downloader download "URL" --filename "Tên tùy chỉnh 🎬"
 video-downloader download "URL" --quality 720
+video-downloader download "URL" --quiet
 ```
 
 Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
@@ -50,6 +51,27 @@ File `.part` được giữ lại để yt-dlp tiếp tục tải ở lần ch�
 tool chọn bản tốt nhất không vượt quá mức đó và tự fallback xuống bản thấp hơn. Khi nguồn
 cung cấp các stream riêng, yt-dlp gọi FFmpeg để ghép video và audio, ưu tiên MP4/H.264/AAC.
 Sau tải, ffprobe bắt buộc xác nhận có video stream và có audio stream nếu nguồn có audio.
+
+Trong chế độ thường, CLI hiển thị trạng thái đọc metadata, phần trăm, dung lượng, tốc độ,
+ETA, bước ghép FFmpeg và bước xác minh. `--quiet` ẩn các trạng thái trung gian nhưng vẫn
+in đường dẫn kết quả. Lỗi mạng tạm thời và rate limit được thử tối đa 3 lần với backoff
+1 rồi 2 giây; URL sai, video không tồn tại và nội dung cần đăng nhập không được retry.
+`Ctrl+C` kết thúc sạch với exit code 130. Dùng `--debug` khi cần traceback để điều tra lỗi.
+
+### Error code và exit code
+
+| Error code | Exit code | Ý nghĩa |
+| --- | ---: | --- |
+| `UNKNOWN_ERROR` | 1 | Lỗi chưa phân loại |
+| `INVALID_URL` | 2 | URL không hợp lệ |
+| `UNSUPPORTED_SITE` | 3 | yt-dlp không hỗ trợ URL |
+| `VIDEO_UNAVAILABLE` | 4 | Video đã xóa hoặc không tồn tại |
+| `LOGIN_REQUIRED` | 5 | Nội dung private hoặc cần đăng nhập |
+| `RATE_LIMITED` | 6 | Nền tảng giới hạn tần suất |
+| `NETWORK_ERROR` | 7 | Timeout hoặc lỗi mạng tạm thời |
+| `FFMPEG_MISSING` | 8 | Thiếu FFmpeg hoặc ffprobe |
+| `POSTPROCESS_ERROR` | 9 | Ghép hoặc xác minh media thất bại |
+| `WRITE_ERROR` | 10 | Không thể ghi output |
 
 Đọc metadata mà không tải video:
 

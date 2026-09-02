@@ -13,8 +13,9 @@ from rich.text import Text
 from video_downloader import __version__
 from video_downloader.doctor import run_environment_checks
 from video_downloader.downloader import DownloaderService
-from video_downloader.errors import VideoDownloaderError
+from video_downloader.errors import UnknownError, VideoDownloaderError
 from video_downloader.models import Quality
+from video_downloader.progress import TerminalProgressReporter
 
 app = typer.Typer(
     name="video-downloader",
@@ -109,13 +110,35 @@ def download(
             case_sensitive=False,
         ),
     ] = "best",
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", help="Hide status and progress updates."),
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option("--debug", help="Show a traceback when an error occurs."),
+    ] = False,
 ) -> None:
     """Download one public video at the best available combined quality."""
+    reporter = None if quiet else TerminalProgressReporter()
     try:
-        file_path = DownloaderService().download(url, output, filename, quality)
+        file_path = DownloaderService(progress_callback=reporter).download(
+            url, output, filename, quality
+        )
+    except KeyboardInterrupt:
+        typer.secho("Download cancelled by user.", fg=typer.colors.YELLOW)
+        raise typer.Exit(code=130) from None
     except VideoDownloaderError as exc:
-        typer.secho(f"Download failed: {exc}", fg=typer.colors.RED)
-        raise typer.Exit(code=1) from exc
+        if debug:
+            raise
+        _print_error("Download failed", exc)
+        raise typer.Exit(code=exc.exit_code) from None
+    except Exception:
+        if debug:
+            raise
+        error = UnknownError("Unexpected error. Re-run with --debug for details.")
+        _print_error("Download failed", error)
+        raise typer.Exit(code=error.exit_code) from None
 
     typer.secho(f"Downloaded to: {file_path}", fg=typer.colors.GREEN)
 
@@ -127,13 +150,33 @@ def info(
         bool,
         typer.Option("--json", help="Print machine-readable JSON."),
     ] = False,
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", help="Hide status updates."),
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option("--debug", help="Show a traceback when an error occurs."),
+    ] = False,
 ) -> None:
     """Read video metadata without downloading the media."""
+    reporter = None if quiet or json_output else TerminalProgressReporter()
     try:
-        metadata = DownloaderService().get_metadata(url)
+        metadata = DownloaderService(progress_callback=reporter).get_metadata(url)
+    except KeyboardInterrupt:
+        typer.secho("Metadata lookup cancelled by user.", fg=typer.colors.YELLOW)
+        raise typer.Exit(code=130) from None
     except VideoDownloaderError as exc:
-        typer.secho(f"Metadata failed: {exc}", fg=typer.colors.RED)
-        raise typer.Exit(code=1) from exc
+        if debug:
+            raise
+        _print_error("Metadata failed", exc)
+        raise typer.Exit(code=exc.exit_code) from None
+    except Exception:
+        if debug:
+            raise
+        error = UnknownError("Unexpected error. Re-run with --debug for details.")
+        _print_error("Metadata failed", error)
+        raise typer.Exit(code=error.exit_code) from None
 
     if json_output:
         typer.echo(json.dumps(asdict(metadata), ensure_ascii=False, indent=2))
@@ -160,3 +203,10 @@ def _format_duration(duration_seconds: int | None) -> str:
     hours, remainder = divmod(duration_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def _print_error(prefix: str, error: VideoDownloaderError) -> None:
+    typer.secho(
+        f"{prefix} [{error.code.value}]: {error}",
+        fg=typer.colors.RED,
+    )
