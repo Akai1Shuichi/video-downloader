@@ -1,0 +1,39 @@
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Runtime output
+downloads/*
+logs/*
+!downloads/.gitkeep
+!logs/.gitkeep
+*.log
+
+# Downloaded media
+*.3gp
+*.aac
+*.avi
+*.flac
+*.m4a
+*.mkv
+*.mov
+*.mp3
+*.mp4
+*.ogg
+*.opus
+*.part
+*.ts
+*.wav
+*.webm
+
+# Editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

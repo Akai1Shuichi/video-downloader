@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.25,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "video-downloader"
+version = "0.1.0"
+description = "CLI for downloading public videos with yt-dlp and FFmpeg."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rich>=13.7,<15",
+    "typer>=0.12,<1",
+    "yt-dlp>=2025.1.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+    "ruff>=0.9,<1",
+]
+
+[project.scripts]
+video-downloader = "video_downloader.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/video_downloader"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
