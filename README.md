@@ -19,9 +19,12 @@ Kiểm tra cài đặt:
 
 ```bash
 video-downloader --version
+video-downloader doctor
 ruff check .
 pytest
 ```
 
-Các command `doctor`, `info` và `download` sẽ được bổ sung trong những phase tiếp theo.
+Mặc định, `doctor` kiểm tra quyền ghi của thư mục `./downloads`. Có thể kiểm tra một thư
+mục khác bằng `video-downloader doctor --output <thư-mục>`.
 
+Các command `info` và `download` sẽ được bổ sung trong những phase tiếp theo.

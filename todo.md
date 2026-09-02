@@ -26,18 +26,18 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 1 — Kiểm tra môi trường
 
-- [ ] Tạo command `video-downloader doctor`.
-- [ ] Kiểm tra phiên bản Python.
-- [ ] Kiểm tra có import được `yt-dlp`.
-- [ ] Kiểm tra `ffmpeg` có trong PATH.
-- [ ] Kiểm tra `ffprobe` có trong PATH.
-- [ ] Kiểm tra thư mục output có quyền ghi.
-- [ ] Hiển thị hướng dẫn sửa khi một dependency bị thiếu.
+- [x] Tạo command `video-downloader doctor`.
+- [x] Kiểm tra phiên bản Python.
+- [x] Kiểm tra có import được `yt-dlp`.
+- [x] Kiểm tra `ffmpeg` có trong PATH.
+- [x] Kiểm tra `ffprobe` có trong PATH.
+- [x] Kiểm tra thư mục output có quyền ghi.
+- [x] Hiển thị hướng dẫn sửa khi một dependency bị thiếu.
 
 **Hoàn thành khi:**
 
-- [ ] `doctor` trả trạng thái rõ ràng cho từng thành phần.
-- [ ] Trả exit code khác `0` nếu môi trường chưa sẵn sàng.
+- [x] `doctor` trả trạng thái rõ ràng cho từng thành phần.
+- [x] Trả exit code khác `0` nếu môi trường chưa sẵn sàng.
 
 ---
 
@@ -234,7 +234,7 @@ Chưa làm web, API hoặc queue. Chỉ hoàn thành năm việc sau:
 
 - [x] Khởi tạo `pyproject.toml` và cấu trúc `src/`.
 - [x] Cài `yt-dlp`, Typer, Rich, pytest, Ruff và FFmpeg.
-- [ ] Viết command `doctor`.
+- [x] Viết command `doctor`.
 - [ ] Viết `download <url>` cho happy path.
 - [ ] Tải thử một video public và kiểm tra file bằng ffprobe.
 
