@@ -9,6 +9,8 @@ from rich.table import Table
 
 from video_downloader import __version__
 from video_downloader.doctor import run_environment_checks
+from video_downloader.downloader import DownloaderService
+from video_downloader.errors import VideoDownloaderError
 
 app = typer.Typer(
     name="video-downloader",
@@ -73,3 +75,27 @@ def doctor(
         raise typer.Exit(code=1)
 
     console.print("[green]Environment is ready.[/green]")
+
+
+@app.command()
+def download(
+    url: Annotated[str, typer.Argument(help="Public video URL to download.")],
+    output: Annotated[
+        Path,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Directory in which to save the video.",
+            file_okay=False,
+            dir_okay=True,
+        ),
+    ] = Path("downloads"),
+) -> None:
+    """Download one public video at the best available combined quality."""
+    try:
+        file_path = DownloaderService().download(url, output)
+    except VideoDownloaderError as exc:
+        typer.secho(f"Download failed: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+
+    typer.secho(f"Downloaded to: {file_path}", fg=typer.colors.GREEN)

@@ -20,6 +20,7 @@ Kiểm tra cài đặt:
 ```bash
 video-downloader --version
 video-downloader doctor
+video-downloader download "URL"
 ruff check .
 pytest
 ```
@@ -27,4 +28,12 @@ pytest
 Mặc định, `doctor` kiểm tra quyền ghi của thư mục `./downloads`. Có thể kiểm tra một thư
 mục khác bằng `video-downloader doctor --output <thư-mục>`.
 
-Các command `info` và `download` sẽ được bổ sung trong những phase tiếp theo.
+Tải một video public ở chất lượng kết hợp tốt nhất mà nguồn cung cấp:
+
+```bash
+video-downloader download "URL"
+video-downloader download "URL" --output ./my-downloads
+```
+
+Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải. Command `info` sẽ
+được bổ sung trong phase tiếp theo.

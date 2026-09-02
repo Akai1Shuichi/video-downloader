@@ -43,19 +43,19 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 2 — Tải video cơ bản
 
-- [ ] Tạo command `video-downloader download <url>`.
-- [ ] Tạo `DownloaderService`.
-- [ ] Tạo adapter gọi `yt_dlp.YoutubeDL` từ Python.
-- [ ] Tải format `best` trong phiên bản đầu tiên.
-- [ ] Lưu file mặc định vào `./downloads`.
-- [ ] Cho phép truyền `--output` hoặc `-o`.
-- [ ] Trả đường dẫn file sau khi tải thành công.
-- [ ] Xử lý URL sai mà không in traceback khó hiểu.
+- [x] Tạo command `video-downloader download <url>`.
+- [x] Tạo `DownloaderService`.
+- [x] Tạo adapter gọi `yt_dlp.YoutubeDL` từ Python.
+- [x] Tải format `best` trong phiên bản đầu tiên.
+- [x] Lưu file mặc định vào `./downloads`.
+- [x] Cho phép truyền `--output` hoặc `-o`.
+- [x] Trả đường dẫn file sau khi tải thành công.
+- [x] Xử lý URL sai mà không in traceback khó hiểu.
 
 **Hoàn thành khi:**
 
-- [ ] Tải thành công ít nhất một video public.
-- [ ] File đầu ra tồn tại, có dung lượng lớn hơn `0` và phát được.
+- [x] Tải thành công ít nhất một video public.
+- [x] File đầu ra tồn tại, có dung lượng lớn hơn `0` và phát được.
 
 ---
 
@@ -235,8 +235,8 @@ Chưa làm web, API hoặc queue. Chỉ hoàn thành năm việc sau:
 - [x] Khởi tạo `pyproject.toml` và cấu trúc `src/`.
 - [x] Cài `yt-dlp`, Typer, Rich, pytest, Ruff và FFmpeg.
 - [x] Viết command `doctor`.
-- [ ] Viết `download <url>` cho happy path.
-- [ ] Tải thử một video public và kiểm tra file bằng ffprobe.
+- [x] Viết `download <url>` cho happy path.
+- [x] Tải thử một video public và kiểm tra file bằng ffprobe.
 
 ---
 
