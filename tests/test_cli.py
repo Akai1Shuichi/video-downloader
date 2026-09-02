@@ -26,9 +26,10 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
     downloaded_file = tmp_path / "video [abc123].mp4"
 
     class FakeService:
-        def download(self, url: str, output: Path) -> Path:
+        def download(self, url: str, output: Path, filename: str | None) -> Path:
             assert url == "https://example.com/video"
             assert output == tmp_path
+            assert filename is None
             return downloaded_file
 
     monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
@@ -41,7 +42,7 @@ def test_download_command_prints_result(monkeypatch, tmp_path: Path) -> None:
 
 def test_download_command_hides_traceback_for_expected_error(monkeypatch) -> None:
     class FakeService:
-        def download(self, _url: str, _output: Path) -> Path:
+        def download(self, _url: str, _output: Path, _filename: str | None) -> Path:
             raise DownloadError("video unavailable")
 
     monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
@@ -51,6 +52,33 @@ def test_download_command_hides_traceback_for_expected_error(monkeypatch) -> Non
     assert result.exit_code == 1
     assert "Download failed: video unavailable" in result.stdout
     assert "Traceback" not in result.stdout
+
+
+def test_download_command_accepts_custom_filename(monkeypatch, tmp_path: Path) -> None:
+    downloaded_file = tmp_path / "Tên tùy chỉnh 🎬 [abc].mp4"
+
+    class FakeService:
+        def download(self, _url: str, output: Path, filename: str | None) -> Path:
+            assert output == tmp_path
+            assert filename == "Tên tùy chỉnh 🎬"
+            return downloaded_file
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(
+        app,
+        [
+            "download",
+            "https://example.com/video",
+            "--output",
+            str(tmp_path),
+            "--filename",
+            "Tên tùy chỉnh 🎬",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert str(downloaded_file) in result.stdout
 
 
 def _metadata() -> VideoMetadata:

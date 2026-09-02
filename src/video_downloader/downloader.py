@@ -13,7 +13,7 @@ from video_downloader.url_utils import normalize_url
 class DownloadAdapter(Protocol):
     """Interface required by the download service."""
 
-    def download(self, url: str, output_dir: Path) -> Path: ...
+    def download(self, url: str, output_dir: Path, filename: str | None = None) -> Path: ...
 
     def get_metadata(self, url: str) -> dict[str, Any]: ...
 
@@ -24,8 +24,17 @@ class DownloaderService:
     def __init__(self, adapter: DownloadAdapter | None = None) -> None:
         self._adapter = adapter or YtDlpAdapter()
 
-    def download(self, url: str, output_dir: Path = Path("downloads")) -> Path:
-        request = DownloadRequest(url=normalize_url(url), output_dir=output_dir)
+    def download(
+        self,
+        url: str,
+        output_dir: Path = Path("downloads"),
+        filename: str | None = None,
+    ) -> Path:
+        request = DownloadRequest(
+            url=normalize_url(url),
+            output_dir=output_dir,
+            filename_template=filename,
+        )
 
         try:
             request.output_dir.mkdir(parents=True, exist_ok=True)
@@ -36,7 +45,11 @@ class DownloaderService:
         if not request.output_dir.is_dir():
             raise DownloadError(f"Output path is not a directory: {request.output_dir}")
 
-        return self._adapter.download(request.url, request.output_dir)
+        return self._adapter.download(
+            request.url,
+            request.output_dir,
+            request.filename_template,
+        )
 
     def get_metadata(self, url: str) -> VideoMetadata:
         """Read and map metadata without downloading media."""

@@ -93,10 +93,17 @@ def download(
             dir_okay=True,
         ),
     ] = Path("downloads"),
+    filename: Annotated[
+        str | None,
+        typer.Option(
+            "--filename",
+            help="Custom base filename; unsafe path characters are removed.",
+        ),
+    ] = None,
 ) -> None:
     """Download one public video at the best available combined quality."""
     try:
-        file_path = DownloaderService().download(url, output)
+        file_path = DownloaderService().download(url, output, filename)
     except VideoDownloaderError as exc:
         typer.secho(f"Download failed: {exc}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc

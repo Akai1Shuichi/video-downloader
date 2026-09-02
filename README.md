@@ -34,9 +34,16 @@ Tải một video public ở chất lượng kết hợp tốt nhất mà nguồ
 ```bash
 video-downloader download "URL"
 video-downloader download "URL" --output ./my-downloads
+video-downloader download "URL" --filename "Tên tùy chỉnh 🎬"
 ```
 
 Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
+
+Tên file được làm sạch để chạy trên Windows, macOS và Linux, nhưng vẫn giữ Unicode và
+emoji. Video ID luôn được thêm vào tên để hai video trùng tiêu đề không ghi đè nhau.
+`--filename` chỉ đặt phần tên cơ sở; path tuyệt đối, `../` và ký tự phân cách thư mục sẽ
+bị vô hiệu hóa. Nếu file hoàn chỉnh đã tồn tại, tool dùng lại file đó và không ghi đè.
+File `.part` được giữ lại để yt-dlp tiếp tục tải ở lần chạy sau.
 
 Đọc metadata mà không tải video:
 

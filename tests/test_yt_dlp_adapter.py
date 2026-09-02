@@ -12,11 +12,11 @@ def test_adapter_uses_best_format_and_returns_downloaded_path(
 ) -> None:
     downloaded_file = tmp_path / "example.mp4"
     downloaded_file.write_bytes(b"video")
-    captured_options = {}
+    captured_options = []
 
     class FakeYoutubeDL:
         def __init__(self, options) -> None:
-            captured_options.update(options)
+            captured_options.append(options)
 
         def __enter__(self):
             return self
@@ -26,16 +26,21 @@ def test_adapter_uses_best_format_and_returns_downloaded_path(
 
         def extract_info(self, url: str, *, download: bool):
             assert url == "https://example.com/video"
-            assert download is True
+            if not download:
+                return {"id": "abc", "title": "Example"}
             return {"requested_downloads": [{"filepath": str(downloaded_file)}]}
 
     monkeypatch.setattr("video_downloader.adapters.yt_dlp_adapter.YoutubeDL", FakeYoutubeDL)
 
     result = YtDlpAdapter().download("https://example.com/video", tmp_path)
 
-    assert captured_options["format"] == "best"
-    assert captured_options["noplaylist"] is True
-    assert captured_options["outtmpl"].startswith(str(tmp_path))
+    download_options = captured_options[1]
+    assert download_options["format"] == "best"
+    assert download_options["noplaylist"] is True
+    assert download_options["outtmpl"].startswith(str(tmp_path))
+    assert download_options["overwrites"] is False
+    assert download_options["continuedl"] is True
+    assert download_options["nopart"] is False
     assert result == downloaded_file.resolve()
 
 
@@ -84,3 +89,10 @@ def test_adapter_reads_metadata_without_downloading(monkeypatch) -> None:
     assert result["id"] == "abc"
     assert captured_options["skip_download"] is True
     assert captured_options["noplaylist"] is True
+
+
+def test_adapter_rejects_resolved_file_outside_output(tmp_path: Path) -> None:
+    outside_file = tmp_path.parent / "outside.mp4"
+
+    with pytest.raises(DownloadError, match="outside the selected output"):
+        YtDlpAdapter._ensure_inside_output(outside_file, tmp_path)

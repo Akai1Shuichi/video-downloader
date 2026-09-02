@@ -81,20 +81,20 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ## PHASE 4 — Tên file và output an toàn
 
-- [ ] Làm sạch ký tự không hợp lệ trong tên file.
-- [ ] Giới hạn độ dài tên file.
-- [ ] Giữ video ID trong tên để tránh trùng.
-- [ ] Hỗ trợ chữ tiếng Việt và emoji.
-- [ ] Ngăn `../`, path traversal và đường dẫn tuyệt đối trong filename.
-- [ ] Tự tạo output directory nếu chưa tồn tại.
-- [ ] Xác định chính sách khi file đã tồn tại.
-- [ ] Giữ file `.part` để có thể resume tải.
+- [x] Làm sạch ký tự không hợp lệ trong tên file.
+- [x] Giới hạn độ dài tên file.
+- [x] Giữ video ID trong tên để tránh trùng.
+- [x] Hỗ trợ chữ tiếng Việt và emoji.
+- [x] Ngăn `../`, path traversal và đường dẫn tuyệt đối trong filename.
+- [x] Tự tạo output directory nếu chưa tồn tại.
+- [x] Xác định chính sách khi file đã tồn tại.
+- [x] Giữ file `.part` để có thể resume tải.
 
 **Hoàn thành khi:**
 
-- [ ] Title có ký tự đặc biệt không làm tool crash.
-- [ ] Không thể ghi file ra ngoài output directory.
-- [ ] Hai video cùng title không ghi đè lên nhau.
+- [x] Title có ký tự đặc biệt không làm tool crash.
+- [x] Không thể ghi file ra ngoài output directory.
+- [x] Hai video cùng title không ghi đè lên nhau.
 
 ---
 
