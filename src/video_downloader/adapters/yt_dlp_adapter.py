@@ -5,13 +5,13 @@ from typing import Any
 
 from yt_dlp import YoutubeDL
 from yt_dlp.networking.impersonate import ImpersonateTarget
-from yt_dlp.utils import DownloadError as YtDlpDownloadError
+from yt_dlp.utils import YoutubeDLError
 
 from video_downloader.errors import MediaValidationError, WriteError, map_external_error
 from video_downloader.filename import build_safe_stem
 from video_downloader.format_selector import select_format
 from video_downloader.media_probe import MediaProbe, source_has_audio
-from video_downloader.models import Quality
+from video_downloader.models import Browser, Quality
 from video_downloader.progress import (
     ProgressCallback,
     ProgressEvent,
@@ -44,9 +44,16 @@ class YtDlpAdapter:
         self,
         media_probe: MediaProbe | None = None,
         progress_callback: ProgressCallback | None = None,
+        cookies_from_browser: Browser | None = None,
+        browser_profile: str | None = None,
     ) -> None:
         self._media_probe = media_probe or MediaProbe()
         self._progress_callback = progress_callback
+        self._browser_cookies = (
+            (cookies_from_browser, browser_profile, None, None)
+            if cookies_from_browser
+            else None
+        )
 
     def get_metadata(self, url: str) -> dict[str, Any]:
         """Extract metadata without downloading media."""
@@ -61,10 +68,12 @@ class YtDlpAdapter:
         }
         if detect_platform(url) == "tiktok":
             options["impersonate"] = CHROME_IMPERSONATION
+        if self._browser_cookies:
+            options["cookiesfrombrowser"] = self._browser_cookies
         try:
             with YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=False)
-        except YtDlpDownloadError as exc:
+        except YoutubeDLError as exc:
             raise map_external_error(exc) from exc
 
         if not info:
@@ -99,6 +108,8 @@ class YtDlpAdapter:
         }
         if detect_platform(url) == "tiktok":
             options["impersonate"] = CHROME_IMPERSONATION
+        if self._browser_cookies:
+            options["cookiesfrombrowser"] = self._browser_cookies
         if self._progress_callback:
             options["progress_hooks"] = [self._on_progress]
             options["postprocessor_hooks"] = [self._on_postprocessor]
@@ -121,7 +132,7 @@ class YtDlpAdapter:
                 }
                 ydl.process_info(info)
                 file_path = self._resolve_file_path(ydl, info, output_dir, safe_stem)
-        except YtDlpDownloadError as exc:
+        except YoutubeDLError as exc:
             raise map_external_error(exc) from exc
         except OSError as exc:
             raise WriteError(f"Could not write the downloaded file: {exc}") from exc

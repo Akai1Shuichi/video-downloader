@@ -14,7 +14,7 @@ from video_downloader import __version__
 from video_downloader.doctor import run_environment_checks
 from video_downloader.downloader import DownloaderService
 from video_downloader.errors import UnknownError, VideoDownloaderError
-from video_downloader.models import Quality
+from video_downloader.models import Browser, Quality
 from video_downloader.progress import TerminalProgressReporter
 
 app = typer.Typer(
@@ -110,6 +110,21 @@ def download(
             case_sensitive=False,
         ),
     ] = "best",
+    cookies_from_browser: Annotated[
+        Browser | None,
+        typer.Option(
+            "--cookies-from-browser",
+            help="Load cookies from a local browser without printing or storing them.",
+            case_sensitive=False,
+        ),
+    ] = None,
+    browser_profile: Annotated[
+        str | None,
+        typer.Option(
+            "--browser-profile",
+            help="Browser profile name/path, for example 'Default' or 'Profile 1'.",
+        ),
+    ] = None,
     quiet: Annotated[
         bool,
         typer.Option("--quiet", help="Hide status and progress updates."),
@@ -121,8 +136,9 @@ def download(
 ) -> None:
     """Download one public video at the best available combined quality."""
     reporter = None if quiet else TerminalProgressReporter()
+    service = _create_service(reporter, cookies_from_browser, browser_profile)
     try:
-        file_path = DownloaderService(progress_callback=reporter).download(
+        file_path = service.download(
             url, output, filename, quality
         )
     except KeyboardInterrupt:
@@ -150,6 +166,21 @@ def info(
         bool,
         typer.Option("--json", help="Print machine-readable JSON."),
     ] = False,
+    cookies_from_browser: Annotated[
+        Browser | None,
+        typer.Option(
+            "--cookies-from-browser",
+            help="Load cookies from a local browser without printing or storing them.",
+            case_sensitive=False,
+        ),
+    ] = None,
+    browser_profile: Annotated[
+        str | None,
+        typer.Option(
+            "--browser-profile",
+            help="Browser profile name/path, for example 'Default' or 'Profile 1'.",
+        ),
+    ] = None,
     quiet: Annotated[
         bool,
         typer.Option("--quiet", help="Hide status updates."),
@@ -161,8 +192,9 @@ def info(
 ) -> None:
     """Read video metadata without downloading the media."""
     reporter = None if quiet or json_output else TerminalProgressReporter()
+    service = _create_service(reporter, cookies_from_browser, browser_profile)
     try:
-        metadata = DownloaderService(progress_callback=reporter).get_metadata(url)
+        metadata = service.get_metadata(url)
     except KeyboardInterrupt:
         typer.secho("Metadata lookup cancelled by user.", fg=typer.colors.YELLOW)
         raise typer.Exit(code=130) from None
@@ -203,6 +235,22 @@ def _format_duration(duration_seconds: int | None) -> str:
     hours, remainder = divmod(duration_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def _create_service(
+    reporter: TerminalProgressReporter | None,
+    cookies_from_browser: Browser | None,
+    browser_profile: str | None,
+) -> DownloaderService:
+    if browser_profile and not cookies_from_browser:
+        raise typer.BadParameter("--browser-profile requires --cookies-from-browser")
+    if not cookies_from_browser:
+        return DownloaderService(progress_callback=reporter)
+    return DownloaderService(
+        progress_callback=reporter,
+        cookies_from_browser=cookies_from_browser,
+        browser_profile=browser_profile,
+    )
 
 
 def _print_error(prefix: str, error: VideoDownloaderError) -> None:

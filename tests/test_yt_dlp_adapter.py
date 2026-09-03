@@ -123,10 +123,14 @@ def test_adapter_reads_metadata_without_downloading(monkeypatch) -> None:
 
     monkeypatch.setattr("video_downloader.adapters.yt_dlp_adapter.YoutubeDL", FakeYoutubeDL)
 
-    result = YtDlpAdapter().get_metadata("https://www.tiktok.com/@creator/video/123")
+    result = YtDlpAdapter(
+        cookies_from_browser="chrome",
+        browser_profile="Default",
+    ).get_metadata("https://www.tiktok.com/@creator/video/123")
 
     assert result["id"] == "abc"
     assert str(captured_options["impersonate"]) == "chrome"
+    assert captured_options["cookiesfrombrowser"] == ("chrome", "Default", None, None)
     assert captured_options["skip_download"] is True
     assert captured_options["noplaylist"] is True
 

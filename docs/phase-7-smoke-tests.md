@@ -14,6 +14,8 @@ export VD_SMOKE_FACEBOOK_URL='https://www.facebook.com/...'
 export VD_SMOKE_INSTAGRAM_URL='https://www.instagram.com/reel/...'
 export VD_SMOKE_TIKTOK_URL='https://www.tiktok.com/@.../video/...'
 export VD_SMOKE_DOUYIN_URL='https://www.douyin.com/video/...'
+export VD_SMOKE_COOKIES_FROM_BROWSER='chrome'
+export VD_SMOKE_BROWSER_PROFILE='Default'
 
 # Một URL dùng thử best và 720p.
 export VD_SMOKE_QUALITY_URL="$VD_SMOKE_TIKTOK_URL"
@@ -65,7 +67,8 @@ release.
 | Facebook short link | ✓ | ✓ | ✓ | ✓ | PASS |
 | Instagram Reel | ✓ | ✓ | ✓ | ✓ | PASS |
 | TikTok `/video/` | ✓ | ✓ | ✓ | ✓ | PASS sau khi bật Chrome impersonation |
-| Douyin | ✗ | — | — | — | Cần fresh cookies; phân loại `LOGIN_REQUIRED` |
+| Douyin original URL + Chrome cookies | ✓ | ✓ | ✓ | ✓ | PASS, output HEVC 720p + AAC |
+| Douyin signed CDN streams | — | ✓ | ✓ | ✓ | Ghép H.264 1080p + AAC thành công |
 | `best` | ✓ | ✓ | ✓ | ✓ | PASS trên Facebook và Instagram |
 | `720` trên mẫu Facebook | ✓ | ✗ | ✓ | ✓ | Output 1280p bị hậu kiểm chặn đúng |
 | Fallback dưới 720p | — | — | — | — | Chưa có mẫu nguồn phù hợp |
@@ -73,6 +76,11 @@ release.
 
 Không lưu URL đầy đủ trong biên bản. Các URL do người chạy cung cấp chỉ được truyền qua
 biến môi trường. Mẫu TikTok `/photo/` ban đầu không được tính là video; mẫu `/video/` thay
-thế đã tải thành công ở 1080×1920, có video HEVC và audio MP3. Cần cung cấp cookie hợp lệ
-cho Douyin hoặc dùng mẫu public không yêu cầu cookie, và thêm một nguồn có độ phân giải
-tối đa dưới 720p để hoàn tất Phase 7.
+thế đã tải thành công ở 1080×1920, có video HEVC và audio MP3. Original URL Douyin đã tải
+thành công bằng cookie từ Chrome profile `Default`; output 1280×720 có video HEVC và audio
+AAC. Còn cần một nguồn có độ phân giải tối đa dưới 720p để hoàn tất kiểm thử fallback.
+
+Hai signed CDN URL Douyin do người chạy lấy từ DevTools đã được kiểm tra khi còn hiệu lực:
+video H.264 1920×1080 và audio AAC đều dài khoảng 436,7 giây, ghép bằng stream copy thành
+công. Không lưu signed URL vào repo vì token có thời hạn; smoke chính thức dùng original
+URL cùng `--cookies-from-browser chrome --browser-profile Default`.

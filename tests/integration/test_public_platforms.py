@@ -6,12 +6,14 @@ committed because social-media URLs expire, disappear, or change privacy state f
 
 import os
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from video_downloader.downloader import DownloaderService
 from video_downloader.errors import LoginRequiredError, VideoUnavailableError
 from video_downloader.media_probe import MediaProbe
+from video_downloader.models import Browser
 
 PLATFORM_URL_VARIABLES = {
     "facebook": "VD_SMOKE_FACEBOOK_URL",
@@ -30,6 +32,18 @@ def _required_url(variable: str) -> str:
     return value
 
 
+def _service(platform: str | None = None) -> DownloaderService:
+    if platform != "douyin":
+        return DownloaderService()
+    browser = os.environ.get("VD_SMOKE_COOKIES_FROM_BROWSER")
+    if not browser:
+        return DownloaderService()
+    return DownloaderService(
+        cookies_from_browser=cast(Browser, browser),
+        browser_profile=os.environ.get("VD_SMOKE_BROWSER_PROFILE"),
+    )
+
+
 @pytest.mark.parametrize(("platform", "variable"), PLATFORM_URL_VARIABLES.items())
 def test_public_platform_metadata_download_and_audio(
     tmp_path: Path,
@@ -37,7 +51,7 @@ def test_public_platform_metadata_download_and_audio(
     variable: str,
 ) -> None:
     url = _required_url(variable)
-    service = DownloaderService()
+    service = _service(platform)
 
     metadata = service.get_metadata(url)
     file_path = service.download(url, tmp_path / platform)

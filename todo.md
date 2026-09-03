@@ -171,7 +171,7 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 - [x] Facebook public video: metadata + download + audio.
 - [x] Instagram public Reel: metadata + download + audio.
 - [x] TikTok public video: metadata + download + audio.
-- [ ] Douyin public video: metadata + download + audio.
+- [x] Douyin public video: metadata + download + audio.
 - [x] Thử short link nếu nền tảng có short link.
 - [ ] Thử `best`, `720` và fallback.
 - [x] Thử URL sai.
@@ -180,7 +180,7 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 **Hoàn thành khi:**
 
-- [ ] Cả bốn nền tảng có ít nhất một URL public hoạt động tại thời điểm release.
+- [x] Cả bốn nền tảng có ít nhất một URL public hoạt động tại thời điểm release.
 - [x] Unit test chạy được khi không có Internet.
 
 ---

@@ -117,6 +117,42 @@ def test_download_command_accepts_quality(monkeypatch, tmp_path: Path) -> None:
     assert result.exit_code == 0
 
 
+def test_download_passes_browser_cookie_source(monkeypatch, tmp_path: Path) -> None:
+    class FakeService:
+        def __init__(self, **kwargs) -> None:
+            assert kwargs["cookies_from_browser"] == "chrome"
+            assert kwargs["browser_profile"] == "Default"
+
+        def download(self, *_args) -> Path:
+            return tmp_path / "video.mp4"
+
+    monkeypatch.setattr("video_downloader.cli.DownloaderService", FakeService)
+
+    result = runner.invoke(
+        app,
+        [
+            "download",
+            "https://www.douyin.com/video/123",
+            "--cookies-from-browser",
+            "chrome",
+            "--browser-profile",
+            "Default",
+        ],
+    )
+
+    assert result.exit_code == 0
+
+
+def test_browser_profile_requires_cookie_source() -> None:
+    result = runner.invoke(
+        app,
+        ["info", "https://www.douyin.com/video/123", "--browser-profile", "Default"],
+    )
+
+    assert result.exit_code == 2
+    assert "requires --cookies-from-browser" in result.stderr
+
+
 def test_download_command_rejects_unknown_quality() -> None:
     result = runner.invoke(app, ["download", "https://example.com/video", "--quality", "4k"])
 

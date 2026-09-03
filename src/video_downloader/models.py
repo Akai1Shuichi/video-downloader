@@ -6,6 +6,9 @@ from typing import Literal
 
 Quality = Literal["best", "1080", "720", "480"]
 Platform = Literal["facebook", "instagram", "tiktok", "douyin", "other"]
+Browser = Literal[
+    "brave", "chrome", "chromium", "edge", "firefox", "opera", "safari", "vivaldi", "whale"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,4 +42,3 @@ class DownloadResult:
     success: bool
     file_path: Path | None = None
     metadata: VideoMetadata | None = None
-

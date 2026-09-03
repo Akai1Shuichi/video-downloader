@@ -39,6 +39,20 @@ video-downloader download "URL" --quality 720
 video-downloader download "URL" --quiet
 ```
 
+Nếu Douyin yêu cầu fresh cookies, dùng cookie trực tiếp từ profile trình duyệt đang mở
+được video. Tool chỉ chuyển cookie trong bộ nhớ cho `yt-dlp`, không in hoặc lưu cookie:
+
+```bash
+video-downloader info "DOUYIN_URL" \
+  --cookies-from-browser chrome --browser-profile Default
+video-downloader download "DOUYIN_URL" \
+  --cookies-from-browser chrome --browser-profile Default
+```
+
+Các browser hỗ trợ gồm Brave, Chrome, Chromium, Edge, Firefox, Opera, Safari, Vivaldi và
+Whale. Nếu cookie database đang bị khóa, hãy đóng hẳn browser rồi chạy lại. Chỉ dùng
+profile của chính bạn và không chia sẻ file cookie.
+
 Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
 
 Tên file được làm sạch để chạy trên Windows, macOS và Linux, nhưng vẫn giữ Unicode và

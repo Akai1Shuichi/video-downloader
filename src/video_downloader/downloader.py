@@ -8,7 +8,7 @@ from typing import Any, Protocol, TypeVar
 from video_downloader.adapters.yt_dlp_adapter import YtDlpAdapter
 from video_downloader.errors import VideoDownloaderError, WriteError
 from video_downloader.metadata import map_video_metadata
-from video_downloader.models import DownloadRequest, Quality, VideoMetadata
+from video_downloader.models import Browser, DownloadRequest, Quality, VideoMetadata
 from video_downloader.progress import ProgressCallback, ProgressEvent, ProgressStatus
 from video_downloader.url_utils import normalize_url
 
@@ -39,11 +39,17 @@ class DownloaderService:
         max_attempts: int = 3,
         backoff_seconds: float = 1.0,
         sleeper: Callable[[float], None] = time.sleep,
+        cookies_from_browser: Browser | None = None,
+        browser_profile: str | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
         self._progress_callback = progress_callback
-        self._adapter = adapter or YtDlpAdapter(progress_callback=progress_callback)
+        self._adapter = adapter or YtDlpAdapter(
+            progress_callback=progress_callback,
+            cookies_from_browser=cookies_from_browser,
+            browser_profile=browser_profile,
+        )
         self._max_attempts = max_attempts
         self._backoff_seconds = backoff_seconds
         self._sleeper = sleeper
