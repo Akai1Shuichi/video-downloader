@@ -64,8 +64,10 @@ def test_adapter_uses_best_format_and_returns_downloaded_path(
         "bv*[height<=720]+ba/b[height<=720]/"
         "bv*[height<=?720]+ba/b[height<=?720]"
     )
-    assert download_options["format_sort"][2:] == [
+    assert download_options["format_sort"] == [
         "vcodec:h264",
+        "res",
+        "fps",
         "acodec:aac",
         "ext:mp4:m4a",
     ]

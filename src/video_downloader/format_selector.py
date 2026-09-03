@@ -36,6 +36,9 @@ def select_format(quality: Quality) -> FormatSelection:
 
     return FormatSelection(
         selector=selector,
-        sort=["res", "fps", "vcodec:h264", "acodec:aac", "ext:mp4:m4a"],
+        # Prefer broadly playable H.264 before resolution. TikTok commonly offers its
+        # highest-resolution streams only as HEVC; many players then expose just the
+        # MP3 audio track and make the downloaded MP4 appear audio-only.
+        sort=["vcodec:h264", "res", "fps", "acodec:aac", "ext:mp4:m4a"],
         maximum_height=maximum_height,
     )
