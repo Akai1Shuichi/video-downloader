@@ -25,6 +25,17 @@ def test_normalize_url_rejects_invalid_input(url: str) -> None:
         normalize_url(url)
 
 
+def test_normalize_url_rejects_impossible_douyin_video_id() -> None:
+    with pytest.raises(InvalidUrlError, match="Douyin video ID.*too large"):
+        normalize_url("https://www.douyin.com/video/76675667385524882703")
+
+
+def test_normalize_url_accepts_valid_64_bit_douyin_video_id() -> None:
+    url = "https://www.douyin.com/video/7667904915150294278"
+
+    assert normalize_url(url) == url
+
+
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
@@ -39,4 +50,3 @@ def test_normalize_url_rejects_invalid_input(url: str) -> None:
 )
 def test_detect_platform_including_short_links(url: str, expected: str) -> None:
     assert detect_platform(url) == expected
-

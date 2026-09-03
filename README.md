@@ -111,3 +111,14 @@ pytest --run-network -m network -v
 
 Xem [checklist smoke test Phase 7](docs/phase-7-smoke-tests.md) để cấu hình URL, kiểm tra
 `best`, `720`, fallback, short link, video đã xóa/private và ghi biên bản trước release.
+
+Chạy nhanh bốn URL smoke test hiện tại (metadata, download, video và audio):
+
+```bash
+./scripts/test_platform_links.sh
+./scripts/test_platform_links.sh tiktok
+./scripts/test_platform_links.sh douyin
+```
+
+Tham số đầu tiên nhận `all`, `facebook`, `instagram`, `tiktok` hoặc `douyin`. Có thể
+override URL/profile bằng các biến `VD_SMOKE_*` được mô tả trong checklist Phase 7.

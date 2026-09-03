@@ -91,6 +91,11 @@ def map_external_error(error: Exception) -> VideoDownloaderError:
     """Convert an yt-dlp/system message into a stable application error."""
     message = _clean_message(error)
     lowered = message.lower()
+    if "fresh cookies" in lowered:
+        return LoginRequiredError(
+            "Douyin needs fresh browser cookies. Open and play the URL in the selected "
+            "browser profile, close the browser completely, then retry immediately."
+        )
     mappings: tuple[tuple[tuple[str, ...], type[VideoDownloaderError]], ...] = (
         (("ffmpeg not found", "ffprobe not found", "ffmpeg is not installed"), FfmpegMissingError),
         (

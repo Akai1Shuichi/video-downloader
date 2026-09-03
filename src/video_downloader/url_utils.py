@@ -1,5 +1,6 @@
 """URL validation, normalization, and preliminary platform detection."""
 
+import re
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 from video_downloader.errors import InvalidUrlError
@@ -11,6 +12,9 @@ PLATFORM_DOMAINS: tuple[tuple[Platform, tuple[str, ...]], ...] = (
     ("tiktok", ("tiktok.com",)),
     ("douyin", ("douyin.com", "iesdouyin.com")),
 )
+
+_DOUYIN_VIDEO_PATH = re.compile(r"^/video/(?P<video_id>\d+)/?$")
+_MAX_UNSIGNED_64_BIT_ID = (1 << 64) - 1
 
 
 def normalize_url(value: str) -> str:
@@ -41,7 +45,21 @@ def normalize_url(value: str) -> str:
     is_default_port = (scheme == "http" and port == 80) or (scheme == "https" and port == 443)
     netloc = display_hostname if port is None or is_default_port else f"{display_hostname}:{port}"
     normalized = SplitResult(scheme, netloc, parsed.path or "/", parsed.query, "")
+    _validate_platform_url(normalized)
     return urlunsplit(normalized)
+
+
+def _validate_platform_url(parsed: SplitResult) -> None:
+    """Reject structurally impossible platform URLs before extractor errors obscure them."""
+    hostname = parsed.hostname or ""
+    if hostname != "douyin.com" and not hostname.endswith(".douyin.com"):
+        return
+
+    match = _DOUYIN_VIDEO_PATH.fullmatch(parsed.path)
+    if match and int(match.group("video_id")) > _MAX_UNSIGNED_64_BIT_ID:
+        raise InvalidUrlError(
+            "Invalid Douyin video ID. Check the copied URL; the video ID is too large."
+        )
 
 
 def detect_platform(url: str) -> Platform:
@@ -51,4 +69,3 @@ def detect_platform(url: str) -> Platform:
         if any(hostname == domain or hostname.endswith(f".{domain}") for domain in domains):
             return platform
     return "other"
-

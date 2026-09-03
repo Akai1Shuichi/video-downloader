@@ -27,6 +27,9 @@ export VD_SMOKE_FALLBACK_URL='https://...'
 export VD_SMOKE_UNAVAILABLE_URL='https://...'
 ```
 
+Integration test dùng browser cookies cho TikTok và Douyin; Facebook/Instagram vẫn chạy
+không cookie.
+
 Có thể dùng short link cho một hay nhiều biến nền tảng để đồng thời kiểm tra redirect.
 
 ## Chạy

@@ -33,7 +33,7 @@ def _required_url(variable: str) -> str:
 
 
 def _service(platform: str | None = None) -> DownloaderService:
-    if platform != "douyin":
+    if platform not in {"tiktok", "douyin"}:
         return DownloaderService()
     browser = os.environ.get("VD_SMOKE_COOKIES_FROM_BROWSER")
     if not browser:

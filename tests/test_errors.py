@@ -56,3 +56,11 @@ def test_all_required_error_codes_exist() -> None:
         "UNKNOWN_ERROR",
     }
     assert InvalidUrlError("bad URL").exit_code == 2
+
+
+def test_fresh_cookie_error_has_actionable_message() -> None:
+    error = map_external_error(RuntimeError("Fresh cookies are needed"))
+
+    assert error.code is ErrorCode.LOGIN_REQUIRED
+    assert "Open and play the URL" in str(error)
+    assert "retry immediately" in str(error)

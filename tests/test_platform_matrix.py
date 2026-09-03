@@ -84,7 +84,7 @@ def test_platform_metadata_and_download_contract_is_fully_offline(
     assert result == downloaded_file.resolve()
     assert captured_download_options[0]["noplaylist"] is True
     assert "[height<=720]" in str(captured_download_options[0]["format"])
-    if platform == "tiktok":
+    if platform in {"tiktok", "douyin"}:
         assert str(captured_download_options[0]["impersonate"]) == "chrome"
     else:
         assert "impersonate" not in captured_download_options[0]

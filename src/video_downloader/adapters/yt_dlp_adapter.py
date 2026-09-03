@@ -66,7 +66,7 @@ class YtDlpAdapter:
             "socket_timeout": 20,
             "skip_download": True,
         }
-        if detect_platform(url) == "tiktok":
+        if detect_platform(url) in {"tiktok", "douyin"}:
             options["impersonate"] = CHROME_IMPERSONATION
         if self._browser_cookies:
             options["cookiesfrombrowser"] = self._browser_cookies
@@ -106,7 +106,7 @@ class YtDlpAdapter:
             "retries": 0,
             "socket_timeout": 20,
         }
-        if detect_platform(url) == "tiktok":
+        if detect_platform(url) in {"tiktok", "douyin"}:
             options["impersonate"] = CHROME_IMPERSONATION
         if self._browser_cookies:
             options["cookiesfrombrowser"] = self._browser_cookies
