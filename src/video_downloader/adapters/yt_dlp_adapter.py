@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from yt_dlp import YoutubeDL
+from yt_dlp.networking.impersonate import ImpersonateTarget
 from yt_dlp.utils import DownloadError as YtDlpDownloadError
 
 from video_downloader.errors import MediaValidationError, WriteError, map_external_error
@@ -17,6 +18,9 @@ from video_downloader.progress import (
     ProgressStatus,
     event_from_yt_dlp,
 )
+from video_downloader.url_utils import detect_platform
+
+CHROME_IMPERSONATION = ImpersonateTarget("chrome")
 
 
 class _SilentLogger:
@@ -55,6 +59,8 @@ class YtDlpAdapter:
             "socket_timeout": 20,
             "skip_download": True,
         }
+        if detect_platform(url) == "tiktok":
+            options["impersonate"] = CHROME_IMPERSONATION
         try:
             with YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -73,14 +79,7 @@ class YtDlpAdapter:
         quality: Quality = "best",
     ) -> Path:
         self._media_probe.ensure_tools()
-        metadata = self.get_metadata(url)
         format_selection = select_format(quality)
-        safe_stem = build_safe_stem(
-            title=str(metadata.get("title") or "video"),
-            video_id=str(metadata.get("id") or "unknown"),
-            custom_name=filename,
-            quality_label=f"{quality}p" if quality != "best" else None,
-        )
         options: dict[str, Any] = {
             "continuedl": True,
             "extractor_retries": 0,
@@ -94,22 +93,33 @@ class YtDlpAdapter:
             "no_warnings": True,
             "noplaylist": True,
             "nopart": False,
-            "outtmpl": str(output_dir / f"{safe_stem}.%(ext)s"),
             "overwrites": False,
             "retries": 0,
             "socket_timeout": 20,
         }
+        if detect_platform(url) == "tiktok":
+            options["impersonate"] = CHROME_IMPERSONATION
         if self._progress_callback:
             options["progress_hooks"] = [self._on_progress]
             options["postprocessor_hooks"] = [self._on_postprocessor]
 
         try:
             with YoutubeDL(options) as ydl:
-                info = ydl.extract_info(url, download=True)
+                info = ydl.extract_info(url, download=False)
                 if not info:
                     raise map_external_error(
                         RuntimeError("yt-dlp returned no video information.")
                     )
+                safe_stem = build_safe_stem(
+                    title=str(info.get("title") or "video"),
+                    video_id=str(info.get("id") or "unknown"),
+                    custom_name=filename,
+                    quality_label=f"{quality}p" if quality != "best" else None,
+                )
+                ydl.params["outtmpl"] = {
+                    "default": str(output_dir / f"{safe_stem}.%(ext)s")
+                }
+                ydl.process_info(info)
                 file_path = self._resolve_file_path(ydl, info, output_dir, safe_stem)
         except YtDlpDownloadError as exc:
             raise map_external_error(exc) from exc
@@ -123,7 +133,7 @@ class YtDlpAdapter:
         self._emit(ProgressEvent(ProgressStatus.VERIFYING))
         probe_result = self._media_probe.verify(
             file_path,
-            require_audio=source_has_audio(metadata),
+            require_audio=source_has_audio(info),
         )
         if (
             format_selection.maximum_height is not None

@@ -83,3 +83,17 @@ video-downloader info "URL" --json
 Kết quả gồm video ID, tiêu đề, nền tảng, người đăng, thời lượng, thumbnail và các độ phân
 giải mà nguồn cung cấp. Tool nhận diện sơ bộ Facebook, Instagram, TikTok, Douyin và dùng
 `other` cho các website khác.
+
+## Kiểm thử
+
+`pytest` chỉ chạy bộ test offline và chủ động chặn kết nối mạng ngoài ý muốn. Smoke test
+Facebook, Instagram, TikTok và Douyin là opt-in, nhận URL public qua biến môi trường để
+không lưu các URL dễ hết hạn trong repo:
+
+```bash
+pytest
+pytest --run-network -m network -v
+```
+
+Xem [checklist smoke test Phase 7](docs/phase-7-smoke-tests.md) để cấu hình URL, kiểm tra
+`best`, `720`, fallback, short link, video đã xóa/private và ghi biên bản trước release.

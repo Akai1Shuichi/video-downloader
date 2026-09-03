@@ -158,30 +158,30 @@ Tool Python CLI tải video công khai từ Facebook, Instagram, TikTok và Douy
 
 ### Unit test offline
 
-- [ ] Test URL validator.
-- [ ] Test platform detector.
-- [ ] Test filename sanitizer.
-- [ ] Test format selector.
-- [ ] Test metadata mapper.
-- [ ] Test error mapper.
-- [ ] Mock `yt-dlp`; unit test không gọi Internet.
+- [x] Test URL validator.
+- [x] Test platform detector.
+- [x] Test filename sanitizer.
+- [x] Test format selector.
+- [x] Test metadata mapper.
+- [x] Test error mapper.
+- [x] Mock `yt-dlp`; unit test không gọi Internet.
 
 ### Smoke test thủ công
 
-- [ ] Facebook public video: metadata + download + audio.
-- [ ] Instagram public Reel: metadata + download + audio.
-- [ ] TikTok public video: metadata + download + audio.
+- [x] Facebook public video: metadata + download + audio.
+- [x] Instagram public Reel: metadata + download + audio.
+- [x] TikTok public video: metadata + download + audio.
 - [ ] Douyin public video: metadata + download + audio.
-- [ ] Thử short link nếu nền tảng có short link.
+- [x] Thử short link nếu nền tảng có short link.
 - [ ] Thử `best`, `720` và fallback.
-- [ ] Thử URL sai.
+- [x] Thử URL sai.
 - [ ] Thử video đã xóa hoặc không public.
-- [ ] Đánh dấu integration test dùng mạng để không chạy mặc định trong CI.
+- [x] Đánh dấu integration test dùng mạng để không chạy mặc định trong CI.
 
 **Hoàn thành khi:**
 
 - [ ] Cả bốn nền tảng có ít nhất một URL public hoạt động tại thời điểm release.
-- [ ] Unit test chạy được khi không có Internet.
+- [x] Unit test chạy được khi không có Internet.
 
 ---
 
