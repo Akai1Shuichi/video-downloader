@@ -14,6 +14,7 @@ logs/*
 !downloads/.gitkeep
 !logs/.gitkeep
 *.log
+*cookie*.txt
 
 # Downloaded media
 *.3gp

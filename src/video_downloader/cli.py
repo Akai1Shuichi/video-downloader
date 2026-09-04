@@ -125,6 +125,16 @@ def download(
             help="Browser profile name/path, for example 'Default' or 'Profile 1'.",
         ),
     ] = None,
+    cookies: Annotated[
+        Path | None,
+        typer.Option(
+            "--cookies",
+            "-c",
+            help="Path to a cookies.txt file.",
+            dir_okay=False,
+            file_okay=True,
+        ),
+    ] = None,
     quiet: Annotated[
         bool,
         typer.Option("--quiet", help="Hide status and progress updates."),
@@ -136,7 +146,7 @@ def download(
 ) -> None:
     """Download one public video at the best available combined quality."""
     reporter = None if quiet else TerminalProgressReporter()
-    service = _create_service(reporter, cookies_from_browser, browser_profile)
+    service = _create_service(reporter, cookies_from_browser, browser_profile, cookies)
     try:
         file_path = service.download(
             url, output, filename, quality
@@ -181,6 +191,16 @@ def info(
             help="Browser profile name/path, for example 'Default' or 'Profile 1'.",
         ),
     ] = None,
+    cookies: Annotated[
+        Path | None,
+        typer.Option(
+            "--cookies",
+            "-c",
+            help="Path to a cookies.txt file.",
+            dir_okay=False,
+            file_okay=True,
+        ),
+    ] = None,
     quiet: Annotated[
         bool,
         typer.Option("--quiet", help="Hide status updates."),
@@ -192,7 +212,7 @@ def info(
 ) -> None:
     """Read video metadata without downloading the media."""
     reporter = None if quiet or json_output else TerminalProgressReporter()
-    service = _create_service(reporter, cookies_from_browser, browser_profile)
+    service = _create_service(reporter, cookies_from_browser, browser_profile, cookies)
     try:
         metadata = service.get_metadata(url)
     except KeyboardInterrupt:
@@ -229,6 +249,57 @@ def info(
     Console().print(table)
 
 
+@app.command("set-cookie")
+def set_cookie(
+    cookie_string: Annotated[
+        str,
+        typer.Argument(
+            help="Raw cookie string from browser (e.g. copied from F12 Network request headers)."
+        ),
+    ],
+) -> None:
+    """Save a raw cookie string into cookies.txt for automatic use by all commands."""
+    target = Path.cwd() / "cookies.txt"
+    target.write_text(cookie_string.strip(), encoding="utf-8")
+    typer.secho(f"Cookie saved successfully to {target.resolve()}", fg=typer.colors.GREEN)
+
+
+@app.command("fetch-cookie")
+def fetch_cookie(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Target cookie file path (default: ./cookies.txt)."),
+    ] = None,
+    timeout: Annotated[
+        int,
+        typer.Option("--timeout", "-t", help="Timeout in seconds to wait for cookies."),
+    ] = 15,
+) -> None:
+    """Automatically launch a browser window briefly to obtain fresh Douyin cookies."""
+    from video_downloader.cookie_fetcher import (
+        CookieFetcherError,
+        fetch_and_save_douyin_cookies,
+    )
+
+    typer.secho(
+        "Opening browser window to fetch Douyin session cookies... Please wait a moment.",
+        fg=typer.colors.CYAN,
+    )
+    try:
+        saved_path = fetch_and_save_douyin_cookies(output_path=output, timeout_seconds=timeout)
+        typer.secho(
+            f"Successfully captured and saved fresh cookies to: {saved_path.resolve()}",
+            fg=typer.colors.GREEN,
+        )
+        typer.secho(
+            "You can now download Douyin videos directly without entering cookies!",
+            fg=typer.colors.GREEN,
+        )
+    except CookieFetcherError as exc:
+        typer.secho(f"Failed to fetch cookies: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+
+
 def _format_duration(duration_seconds: int | None) -> str:
     if duration_seconds is None:
         return "unknown"
@@ -241,15 +312,19 @@ def _create_service(
     reporter: TerminalProgressReporter | None,
     cookies_from_browser: Browser | None,
     browser_profile: str | None,
+    cookies: Path | None = None,
 ) -> DownloaderService:
     if browser_profile and not cookies_from_browser:
         raise typer.BadParameter("--browser-profile requires --cookies-from-browser")
-    if not cookies_from_browser:
+    if cookies and not cookies.is_file():
+        raise typer.BadParameter(f"Cookie file not found: {cookies}")
+    if not cookies_from_browser and not cookies:
         return DownloaderService(progress_callback=reporter)
     return DownloaderService(
         progress_callback=reporter,
         cookies_from_browser=cookies_from_browser,
         browser_profile=browser_profile,
+        cookies=cookies,
     )
 
 

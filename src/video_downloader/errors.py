@@ -91,10 +91,22 @@ def map_external_error(error: Exception) -> VideoDownloaderError:
     """Convert an yt-dlp/system message into a stable application error."""
     message = _clean_message(error)
     lowered = message.lower()
+    if "could not find" in lowered and "cookie" in lowered:
+        return LoginRequiredError(
+            "Could not find browser cookie database or profile. Please check your browser profile "
+            "name, omit --browser-profile, try another browser (e.g. edge, firefox), or provide "
+            "--cookies <file>."
+        )
+    if "could not copy" in lowered and "cookie database" in lowered:
+        return LoginRequiredError(
+            "Browser cookie database is currently locked by your open browser. "
+            "Please close the browser completely and retry, or provide --cookies <file>."
+        )
     if "fresh cookies" in lowered:
         return LoginRequiredError(
             "Douyin needs fresh browser cookies. Open and play the URL in the selected "
-            "browser profile, close the browser completely, then retry immediately."
+            "browser profile, close the browser completely, then retry immediately. "
+            "Or run 'video-downloader fetch-cookie' to automatically capture cookies."
         )
     mappings: tuple[tuple[tuple[str, ...], type[VideoDownloaderError]], ...] = (
         (("ffmpeg not found", "ffprobe not found", "ffmpeg is not installed"), FfmpegMissingError),

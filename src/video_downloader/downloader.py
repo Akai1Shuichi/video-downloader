@@ -41,6 +41,7 @@ class DownloaderService:
         sleeper: Callable[[float], None] = time.sleep,
         cookies_from_browser: Browser | None = None,
         browser_profile: str | None = None,
+        cookies: Path | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
@@ -49,6 +50,7 @@ class DownloaderService:
             progress_callback=progress_callback,
             cookies_from_browser=cookies_from_browser,
             browser_profile=browser_profile,
+            cookies_file=cookies,
         )
         self._max_attempts = max_attempts
         self._backoff_seconds = backoff_seconds

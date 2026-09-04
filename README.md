@@ -39,19 +39,24 @@ video-downloader download "URL" --quality 720
 video-downloader download "URL" --quiet
 ```
 
-Nếu Douyin yêu cầu fresh cookies, dùng cookie trực tiếp từ profile trình duyệt đang mở
-được video. Tool chỉ chuyển cookie trong bộ nhớ cho `yt-dlp`, không in hoặc lưu cookie:
+### Hỗ trợ Douyin (TikTok Trung Quốc) tự động
 
-```bash
-video-downloader info "DOUYIN_URL" \
-  --cookies-from-browser chrome --browser-profile Default
-video-downloader download "DOUYIN_URL" \
-  --cookies-from-browser chrome --browser-profile Default
-```
-
-Các browser hỗ trợ gồm Brave, Chrome, Chromium, Edge, Firefox, Opera, Safari, Vivaldi và
-Whale. Nếu cookie database đang bị khóa, hãy đóng hẳn browser rồi chạy lại. Chỉ dùng
-profile của chính bạn và không chia sẻ file cookie.
+Douyin áp dụng cơ chế xác thực phức tạp (`a_bogus`, `ttwid`). Tool đã tích hợp sẵn cơ chế **tự động phân giải qua trình duyệt (Browser Fallback)**:
+- Bạn chỉ cần chạy lệnh tải bình thường: `video-downloader download "DOUYIN_URL"`. Nếu yt-dlp gặp hạn chế, tool sẽ tự động khởi động một tiến trình trình duyệt ngắn hạn để bắt luồng video gốc không đóng dấu và lưu lại cookie cho các lần sau.
+- Bạn cũng có thể tự động lấy và làm mới cookie bất kỳ lúc nào bằng lệnh:
+  ```bash
+  video-downloader fetch-cookie
+  ```
+  Lệnh này sẽ tự mở trình duyệt 4 giây để lấy cookie phiên Douyin hợp lệ và ghi vào file `cookies.txt`.
+- Hoặc nếu bạn muốn dán cookie thủ công từ DevTools:
+  ```bash
+  video-downloader set-cookie "cookie_string_here"
+  ```
+- Hoặc truyền trực tiếp file cookie hoặc lấy từ profile trình duyệt:
+  ```bash
+  video-downloader download "DOUYIN_URL" --cookies cookies.txt
+  video-downloader download "DOUYIN_URL" --cookies-from-browser chrome --browser-profile Default
+  ```
 
 Sau khi thành công, command in ra đường dẫn tuyệt đối của file đã tải.
 

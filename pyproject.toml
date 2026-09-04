@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "rich>=13.7,<15",
+    "selenium>=4.20.0",
     "typer>=0.12,<1",
     "yt-dlp[curl-cffi,secretstorage]>=2025.1.15",
 ]
